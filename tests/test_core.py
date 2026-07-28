@@ -1,4 +1,12 @@
 """Tests for core modules: config, context, session, imports."""
+# 核心模块测试：配置、上下文压缩、会话、导入、成本估算、Agent 工具执行
+# 覆盖：
+#   - 公共 API 导出（Agent / LLM / Config / ALL_TOOLS）
+#   - Config.from_env 从环境变量读取
+#   - ContextManager 三层压缩、_safe_split 防止 tool 孤立
+#   - Session 保存/加载/列表/ID 规整
+#   - LLM 成本估算
+#   - Agent 工具执行（作用域隔离、参数校验、中断回填）
 
 from corecoder import Agent, LLM, Config, ALL_TOOLS, __version__
 from corecoder import session as session_module

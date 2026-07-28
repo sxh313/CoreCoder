@@ -1,10 +1,12 @@
 """File pattern matching."""
+# 文件名模式匹配工具：按 glob 规则查找文件
 
 from pathlib import Path
 from .base import Tool
 
 
 class GlobTool(Tool):
+    # glob 工具：按通配符查找文件
     name = "glob"
     description = (
         "Find files matching a glob pattern. "
@@ -33,10 +35,11 @@ class GlobTool(Tool):
 
             hits = list(base.glob(pattern))
             # sort by mtime, newest first
+            # 按修改时间排序，最新的排最前
             hits.sort(key=lambda p: p.stat().st_mtime if p.exists() else 0, reverse=True)
 
             total = len(hits)
-            shown = hits[:100]
+            shown = hits[:100]   # 最多展示前 100 条
             lines = [str(h) for h in shown]
             result = "\n".join(lines)
 

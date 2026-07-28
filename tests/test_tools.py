@@ -1,4 +1,13 @@
 """Tests for the tool system."""
+# 工具系统测试：逐一验证每个工具的行为
+# 覆盖：
+#   - 工具数量与 schema 结构校验
+#   - bash：基础执行、退出码、超时、危险命令拦截、cd 链解析、线程本地 cwd、输出截断
+#   - read_file：读取、未找到、offset/limit、Unicode 往返
+#   - write_file：写入、自动建目录
+#   - edit_file：替换、未找到、重复匹配、非 UTF-8 拒绝
+#   - glob / grep：匹配、空结果、非法正则、跳过垃圾目录
+#   - agent：schema 校验
 
 import os
 import sys

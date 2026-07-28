@@ -1,3 +1,11 @@
+# 会话持久化测试：聚焦 ID 规整、路径穿越防护、Unicode 往返。
+# 用 monkeypatch 把 SESSIONS_DIR 重定向到 tmp_path，避免污染真实会话目录。
+# 覆盖：
+#   - 默认 ID 不碰撞
+#   - 路径穿越（../../etc/passwd）被中和
+#   - 绝对路径、Windows 反斜杠、超长 ID 被规整
+#   - 损坏文件返回 None
+#   - 中文内容 UTF-8 往返
 from corecoder import session as session_module
 from corecoder.session import load_session, save_session
 

@@ -1,22 +1,21 @@
-"""Base class for all tools."""
+# 所有工具的基类定义：统一接口 + OpenAI 函数调用 schema 生成
 
 from abc import ABC, abstractmethod
 
-
 class Tool(ABC):
-    """Minimal tool interface. Subclass this to add new capabilities."""
+    # 工具最小接口：所有具体工具（bash/read/edit 等）都继承此类
 
-    name: str
-    description: str
-    parameters: dict  # JSON Schema for the function args
+    name: str           # 工具名（模型调用时使用，需唯一）
+    description: str    # 工具描述（告诉模型这个工具能干什么）
+    parameters: dict    # 函数参数的 JSON Schema 定义
 
     @abstractmethod
     def execute(self, **kwargs) -> str:
-        """Run the tool and return a text result."""
+        # 执行工具，返回文本结果（统一用字符串，方便塞进对话历史）
         ...
 
     def schema(self) -> dict:
-        """OpenAI function-calling schema."""
+        # 生成 OpenAI 函数调用格式的 schema，传给模型的 tools 参数
         return {
             "type": "function",
             "function": {

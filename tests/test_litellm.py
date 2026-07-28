@@ -1,4 +1,13 @@
 """Tests for the LiteLLM backend."""
+# LiteLLM 后端测试：用 mock 模拟 litellm 的流式响应，避免真实网络调用。
+# 通过 _install_fake_litellm() 往 sys.modules 注入假的 litellm 模块，
+# 让被测代码 `import litellm` 时拿到我们的 mock。
+# 覆盖：
+#   - LiteLLM 类基础行为（继承、不创建 OpenAI client、字段存储）
+#   - _call_with_retry 参数转发（drop_params / api_key / api_base）
+#   - chat() 端到端（返回 LLMResponse、token 统计、on_token 回调、model 转发）
+#   - Config 的 provider 选择
+#   - 多服务商模型字符串转发
 
 import types as builtin_types
 from unittest import mock
@@ -11,27 +20,33 @@ from corecoder.config import Config
 
 # ---------------------------------------------------------------------------
 # Fake streaming response (matches OpenAI stream chunk format)
+# 假的流式响应对象：模仿 OpenAI 流式 chunk 的结构，供 mock 使用
+# （content / choices / delta / tool_calls / usage 都按真实接口的层级组织）
 # ---------------------------------------------------------------------------
 
 
 class _Delta:
+    # 对应 OpenAI chunk 里的 delta：文本片段 / 工具调用片段
     def __init__(self, content=None, tool_calls=None):
         self.content = content
         self.tool_calls = tool_calls
 
 
 class _Choice:
+    # 对应一个 choice，内含一个 delta
     def __init__(self, delta):
         self.delta = delta
 
 
 class _Usage:
+    # 对应最后一块的 usage：本次输入/输出 token 数
     def __init__(self, prompt=10, completion=5):
         self.prompt_tokens = prompt
         self.completion_tokens = completion
 
 
 class _Chunk:
+    # 对应一个完整 chunk：要么带 choices（内容），要么只带 usage（结尾用量块）
     def __init__(self, content=None, usage=None, tool_calls=None):
         self.choices = [_Choice(_Delta(content=content, tool_calls=tool_calls))] if content or tool_calls else []
         self.usage = usage
@@ -39,6 +54,7 @@ class _Chunk:
 
 def _make_stream(contents, usage=None):
     """Create a fake stream from a list of content strings."""
+    # 用一组文本片段构造一个假的流（迭代器），末尾附上 usage 块
     chunks = [_Chunk(content=c) for c in contents]
     if usage:
         chunks.append(_Chunk(usage=usage))
@@ -49,10 +65,13 @@ def _make_stream(contents, usage=None):
 
 # ---------------------------------------------------------------------------
 # Helpers
+# 辅助函数：安装 / 卸载假的 litellm 模块
 # ---------------------------------------------------------------------------
 
 
 def _install_fake_litellm(stream_contents=None):
+    # 往 sys.modules 注入一个假的 litellm 模块，
+    # 让被测代码 `import litellm` 时拿到我们的 mock
     import sys
 
     fake = builtin_types.ModuleType("litellm")
@@ -66,6 +85,7 @@ def _install_fake_litellm(stream_contents=None):
 
 
 def _uninstall_fake_litellm():
+    # 卸载假的 litellm，避免污染其它测试
     import sys
 
     sys.modules.pop("litellm", None)
