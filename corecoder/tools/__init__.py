@@ -7,6 +7,7 @@ from .edit import EditFileTool
 from .glob_tool import GlobTool
 from .grep import GrepTool
 from .agent import AgentTool
+from .now import NowTool
 
 # 所有工具的默认实例列表：实例化顺序即工具注册顺序
 ALL_TOOLS = [
@@ -17,6 +18,7 @@ ALL_TOOLS = [
     GlobTool(),
     GrepTool(),
     AgentTool(),
+    NowTool(),
 ]
 
 def get_tool(name: str):
