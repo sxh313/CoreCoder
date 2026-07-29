@@ -1,4 +1,3 @@
-"""Configuration - env vars and defaults."""
 # 配置模块：从环境变量读取配置，并提供默认值
 
 import os
@@ -7,11 +6,9 @@ from pathlib import Path
 
 
 def _load_dotenv():
-    """Load .env from cwd, walking up to home dir. No-op if python-dotenv missing."""
     # 从当前目录加载 .env，逐级向上查找直到家目录；未装 python-dotenv 则静默跳过
     try:
         from dotenv import load_dotenv
-        # search cwd first, then parent dirs up to ~
         # 先在当前目录找 .env，找不到再逐级向父目录找，直到家目录
         env_path = Path(".env")
         if not env_path.exists():
@@ -26,8 +23,7 @@ def _load_dotenv():
         # override=False：不覆盖已经存在的环境变量（命令行/系统优先）
         load_dotenv(env_path, override=False)
     except ImportError:
-        pass  # python-dotenv not installed, silently skip
-        # 没装 python-dotenv，静默跳过
+        pass  # 没装 python-dotenv，静默跳过
 
 
 @dataclass
@@ -43,10 +39,8 @@ class Config:
 
     @classmethod
     def from_env(cls) -> "Config":
-        # load .env if present (won't override existing env vars)
         # 加载 .env（不会覆盖已存在的环境变量）
         _load_dotenv()
-        # pick up common env vars automatically
         # 按优先级读取常见的 API 密钥环境变量
         api_key = (
             os.getenv("CORECODER_API_KEY")

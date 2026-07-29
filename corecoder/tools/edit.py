@@ -72,7 +72,6 @@ class EditFileTool(Tool):
             p.write_text(new_content, encoding="utf-8")
             _changed_files.add(str(p))   # 记录本次会话改动的文件
 
-            # generate a unified diff so the user/LLM can see exactly what changed
             # 生成 unified diff，让用户/模型清楚看到具体改动
             diff = _unified_diff(content, new_content, str(p))
             return f"Edited {file_path}\n{diff}"
@@ -81,7 +80,6 @@ class EditFileTool(Tool):
 
 
 def _unified_diff(old: str, new: str, filename: str, context: int = 3) -> str:
-    """Generate a compact unified diff between old and new file content."""
     # 生成紧凑的 unified diff，对比新旧文件内容
     old_lines = old.splitlines(keepends=True)
     new_lines = new.splitlines(keepends=True)
@@ -91,7 +89,6 @@ def _unified_diff(old: str, new: str, filename: str, context: int = 3) -> str:
         n=context,    # 上下文行数
     )
     result = "".join(diff)
-    # truncate enormous diffs
     # diff 过长时截断
     if len(result) > 3000:
         result = result[:2500] + "\n... (diff truncated)\n"

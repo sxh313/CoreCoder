@@ -121,7 +121,6 @@ class LLM:
         tools: list[dict] | None = None,
         on_token=None,
     ) -> LLMResponse:
-        """Send messages, stream back response, handle tool calls."""
         # 组装请求参数
         params: dict = {
             "model": self.model,
@@ -168,7 +167,6 @@ class LLM:
                 if on_token:
                     on_token(delta.content)            # 触发回调：实时输出
 
-            # accumulate tool calls across chunks
             # 工具调用也是流式的：同一个调用的 id/name/arguments 会分散到多个 chunk
             if delta.tool_calls:
                 for tc_delta in delta.tool_calls:
@@ -218,7 +216,6 @@ class LLM:
                 wait = 2 ** attempt     # 指数退避：1s、2s、4s
                 time.sleep(wait)
             except APIError as e:
-                # retry 5xx server errors but not 4xx
                 # 重试 5xx 服务端错误，但不重试 4xx 客户端错误
                 # 基类 APIError 没有 status_code 属性，需防御性读取
                 status_code = getattr(e, "status_code", None)
@@ -246,7 +243,6 @@ class LiteLLM(LLM):
         base_url: str | None = None,
         **kwargs,
     ):
-        # skip LLM.__init__ which creates an OpenAI client
         # 跳过父类 LLM.__init__（它会创建 OpenAI 客户端），改用 litellm 适配
         self.model = model
         self.api_key = api_key
@@ -261,7 +257,6 @@ class LiteLLM(LLM):
         tools: list[dict] | None = None,
         on_token=None,
     ) -> LLMResponse:
-        """Send messages via litellm, stream back response, handle tool calls."""
         # 通过 litellm 发送消息、流式接收回复、处理工具调用
         params: dict = {
             "model": self.model,
@@ -272,8 +267,6 @@ class LiteLLM(LLM):
         if tools:
             params["tools"] = tools
 
-        # ask for usage stats in the final chunk; litellm drops this for providers
-        # that don't support it (drop_params), so it's safe to always request
         # 请求最后一块返回用量；litellm 对不支持该参数的服务商会自动丢弃，所以总是请求是安全的
         params["stream_options"] = {"include_usage": True}
         stream = self._call_with_retry(params)
@@ -336,7 +329,6 @@ class LiteLLM(LLM):
         )
 
     def _call_with_retry(self, params: dict, max_retries: int = 3):
-        """Retry on transient errors with exponential backoff via litellm."""
         # 通过 litellm 调用，遇到临时性错误时按指数退避重试
         import litellm
 
