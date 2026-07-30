@@ -1,4 +1,3 @@
-"""File pattern matching."""
 # 文件名模式匹配工具：按 glob 规则查找文件
 
 from pathlib import Path
@@ -34,7 +33,6 @@ class GlobTool(Tool):
                 return f"Error: {path} is not a directory"
 
             hits = list(base.glob(pattern))
-            # sort by mtime, newest first
             # 按修改时间排序，最新的排最前
             hits.sort(key=lambda p: p.stat().st_mtime if p.exists() else 0, reverse=True)
 

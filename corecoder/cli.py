@@ -1,4 +1,3 @@
-"""Interactive REPL - the user-facing terminal interface."""
 # 交互式 REPL：面向用户的终端界面
 
 import sys
@@ -42,7 +41,6 @@ def main():
     args = _parse_args()
     config = Config.from_env()
 
-    # CLI args override env vars
     # 命令行参数优先级高于环境变量
     if args.model:
         config.model = args.model
@@ -79,13 +77,11 @@ def main():
     )
     agent = Agent(llm=llm, max_context_tokens=config.max_context_tokens)
 
-    # resume saved session
     # 恢复已保存的会话（如果指定了 -r）
     if args.resume:
         loaded = load_session(args.resume)
         if loaded:
             agent.messages, loaded_model = loaded
-            # restore the model from the saved session unless overridden by CLI
             # 若命令行未指定模型，则用会话里保存的模型
             if not args.model:
                 agent.llm.model = loaded_model
@@ -95,19 +91,16 @@ def main():
             console.print(f"[red]Session '{args.resume}' not found.[/red]")
             sys.exit(1)
 
-    # one-shot mode
     # 一次性模式（-p）：跑完一条 prompt 就退出，不进 REPL
     if args.prompt:
         _run_once(agent, args.prompt)
         return
 
-    # interactive REPL
     # 否则进入交互式 REPL
     _repl(agent, config)
 
 
 def _run_once(agent: Agent, prompt: str):
-    """Non-interactive: run one prompt and exit."""
     # 非交互模式：执行一条 prompt 后退出
     def on_token(tok):
         # 实时把 token 打到 stdout（无缓冲，便于管道/重定向）
@@ -130,7 +123,6 @@ def _run_once(agent: Agent, prompt: str):
 
 
 def _repl(agent: Agent, config: Config):
-    """Interactive read-eval-print loop."""
     # 交互式主循环：读取输入 → 处理命令/调用 Agent → 输出回复
     console.print(Panel(
         f"[bold]CoreCoder[/bold] v{__version__}\n"
@@ -144,7 +136,6 @@ def _repl(agent: Agent, config: Config):
     hist_path = os.path.expanduser("~/.corecoder_history")
     history = FileHistory(hist_path)
 
-    # Enter submits, Escape+Enter inserts a newline (for pasting code blocks etc.)
     # 按键绑定：Enter 提交；Esc+Enter 插入换行（方便粘贴代码块）
     kb = KeyBindings()
 
@@ -177,7 +168,6 @@ def _repl(agent: Agent, config: Config):
             # 空输入：跳过本轮
             continue
 
-        # built-in commands
         # 内置斜杠命令处理
         if user_input.lower() in ("quit", "exit", "/quit", "/exit"):
             # 退出命令
@@ -248,13 +238,11 @@ def _repl(agent: Agent, config: Config):
                     console.print(f"  [cyan]{s['id']}[/cyan] ({s['model']}, {s['saved_at']}) {s['preview']}")
             continue
 
-        # an unknown /command shouldn't be sent to the model as a prompt
         # 未知的斜杠命令：不发给模型，直接提示
         if user_input.startswith("/"):
             console.print(f"[yellow]Unknown command: {user_input.split()[0]} (try /help)[/yellow]")
             continue
 
-        # call the agent
         # 普通文本输入：交给 Agent 处理
         streamed: list[str] = []
 
@@ -273,7 +261,6 @@ def _repl(agent: Agent, config: Config):
                 # 有流式输出：补一个换行
                 print()  # newline after streamed tokens
             else:
-                # response wasn't streamed (came after tool calls)
                 # 没有流式输出（例如工具调用后才生成的回复）：用 Markdown 渲染
                 console.print(Markdown(response))
         except KeyboardInterrupt:

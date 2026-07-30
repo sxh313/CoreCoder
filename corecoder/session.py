@@ -1,8 +1,3 @@
-"""Session persistence - save and resume conversations.
-
-Claude Code maintains session state via QueryEngine (1295 lines).
-CoreCoder distills this to: JSON dump of messages + model config.
-"""
 # 会话持久化模块：保存和恢复对话。
 # Claude Code 用 QueryEngine 维护会话状态（1295 行），
 # CoreCoder 精简为：把 messages + 模型配置 序列化成 JSON。
@@ -17,8 +12,7 @@ from pathlib import Path
 SESSIONS_DIR = Path.home() / ".corecoder" / "sessions"
 # 会话 ID 中不安全的字符（替换成 -）
 _SAFE_SESSION_RE = re.compile(r"[^A-Za-z0-9._-]+")
-_MAX_SESSION_ID_LEN = 100  # keep filenames comfortably under the OS limit
-# 会话 ID 最大长度，确保文件名远低于操作系统限制
+_MAX_SESSION_ID_LEN = 100  # 会话 ID 最大长度，确保文件名远低于操作系统限制
 
 
 def _normalize_session_id(session_id: str | None) -> str:
@@ -53,7 +47,6 @@ def _session_path(session_id: str) -> Path:
 
 
 def save_session(messages: list[dict], model: str, session_id: str | None = None) -> str:
-    """Save conversation to disk. Returns the session ID."""
     # 把对话保存到磁盘，返回（归一化后的）会话 ID
     SESSIONS_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -73,7 +66,6 @@ def save_session(messages: list[dict], model: str, session_id: str | None = None
 
 
 def load_session(session_id: str) -> tuple[list[dict], str] | None:
-    """Load a saved session. Returns (messages, model) or None."""
     # 加载已保存的会话，返回 (messages, model)；文件不存在或损坏时返回 None
     path = _session_path(session_id)
     if not path.exists():
@@ -83,13 +75,11 @@ def load_session(session_id: str) -> tuple[list[dict], str] | None:
         data = json.loads(path.read_text(encoding="utf-8"))
         return data["messages"], data["model"]
     except (json.JSONDecodeError, KeyError, OSError):
-        # a corrupt or truncated session file shouldn't crash resume
         # 会话文件损坏/截断不应让恢复功能崩溃
         return None
 
 
 def list_sessions() -> list[dict]:
-    """List available sessions, newest first."""
     # 列出所有会话，按文件名倒序（即最新在前）
     if not SESSIONS_DIR.exists():
         return []
@@ -98,7 +88,6 @@ def list_sessions() -> list[dict]:
     for f in sorted(SESSIONS_DIR.glob("*.json"), reverse=True):
         try:
             data = json.loads(f.read_text(encoding="utf-8"))
-            # grab first user message as preview
             # 取第一条 user 消息作为预览文本
             preview = ""
             for m in data.get("messages", []):
@@ -115,5 +104,4 @@ def list_sessions() -> list[dict]:
             # 单个会话文件损坏就跳过，不影响列表
             continue
 
-    return sessions[:20]  # cap at 20
-    # 最多返回 20 条
+    return sessions[:20]  # 最多返回 20 条

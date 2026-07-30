@@ -24,7 +24,7 @@ def test_public_api_exports():
     assert Agent is not None
     assert LLM is not None
     assert Config is not None
-    assert len(ALL_TOOLS) == 7
+    assert len(ALL_TOOLS) == 9
 
 
 def test_config_from_env(monkeypatch):
@@ -37,6 +37,8 @@ def test_config_defaults(monkeypatch):
     # clear relevant env vars without leaking the change into other tests
     monkeypatch.delenv("CORECODER_MODEL", raising=False)
     monkeypatch.delenv("CORECODER_MAX_TOKENS", raising=False)
+    # 屏蔽 .env 加载，避免项目本地 .env 干扰默认值测试
+    monkeypatch.setattr("corecoder.config._load_dotenv", lambda: None)
 
     c = Config.from_env()
     assert c.model == "gpt-5.5"

@@ -1,12 +1,3 @@
-"""Sub-agent spawning (inspired by Claude Code's AgentTool, 1397 lines).
-
-The idea: for complex sub-tasks, spawn an independent agent with its own
-conversation history and tool access. This lets the main agent delegate
-work like "go research this codebase and report back" without polluting
-its own context window.
-
-The sub-agent runs to completion and returns a text summary.
-"""
 # 子智能体派生工具（灵感来自 Claude Code 的 AgentTool，原版 1397 行）。
 # 核心思路：对复杂子任务，派生一个独立的子智能体，拥有自己的对话历史和工具权限。
 # 这样主智能体可以把「去研究代码库并汇报」之类的工作委派出去，
@@ -36,7 +27,6 @@ class AgentTool(Tool):
         "required": ["task"],
     }
 
-    # set by Agent.__init__ after construction
     # 由 Agent.__init__ 在构造完成后注入：指向主（父）智能体
     _parent_agent = None
 
@@ -45,7 +35,6 @@ class AgentTool(Tool):
             # 未注入父智能体，无法派生
             return "Error: agent tool not initialized (no parent agent)"
 
-        # import here to avoid circular dep
         # 在此导入，避免与 agent.py 产生循环依赖
         from ..agent import Agent
 
@@ -60,7 +49,6 @@ class AgentTool(Tool):
 
         try:
             result = sub.chat(task)
-            # trim long results to avoid blowing up parent's context
             # 截断过长结果，避免撑爆父智能体的上下文
             if len(result) > 5000:
                 result = result[:4500] + "\n... (sub-agent output truncated)"
